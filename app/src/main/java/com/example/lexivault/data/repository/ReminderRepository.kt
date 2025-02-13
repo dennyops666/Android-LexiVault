@@ -7,6 +7,7 @@ import com.example.lexivault.data.database.entity.ReminderType
 import com.example.lexivault.notification.NotificationHelper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -53,19 +54,20 @@ class ReminderRepository @Inject constructor(
 
     suspend fun checkAndSendNotifications() {
         val now = LocalDateTime.now()
-        reminderDao.getDueReminders(now).combine(wordDao.getAllWords()) { reminders, words ->
-            val wordMap = words.associateBy { it.id }
-            reminders.forEach { reminder ->
-                val word = wordMap[reminder.wordId] ?: return@forEach
-                val reminderType = when (reminder.reminderType) {
-                    ReminderType.DAILY -> "每日学习"
-                    ReminderType.DAY_1 -> "1天复习"
-                    ReminderType.DAY_3 -> "3天复习"
-                    ReminderType.DAY_7 -> "7天复习"
-                }
-                notificationHelper.showReviewReminder(word.word, reminderType)
-                markReminderAsCompleted(reminder.id)
+        val reminders = reminderDao.getDueReminders(now).first()
+        val words = wordDao.getAllWords().first()
+        val wordMap = words.associateBy { it.id }
+        
+        reminders.forEach { reminder ->
+            val word = wordMap[reminder.wordId] ?: return@forEach
+            val reminderType = when (reminder.reminderType) {
+                ReminderType.DAILY -> "每日学习"
+                ReminderType.DAY_1 -> "1天复习"
+                ReminderType.DAY_3 -> "3天复习"
+                ReminderType.DAY_7 -> "7天复习"
             }
+            notificationHelper.showReviewReminder(word.word, reminderType)
+            markReminderAsCompleted(reminder.id)
         }
     }
 
@@ -90,9 +92,8 @@ class ReminderRepository @Inject constructor(
 
     suspend fun cancelDailyReminder() {
         // 删除所有每日提醒
-        reminderDao.getDueReminders(LocalDateTime.now()).collect { reminders ->
-            reminders.filter { it.reminderType == ReminderType.DAILY }
-                .forEach { reminderDao.delete(it) }
-        }
+        val reminders = reminderDao.getDueReminders(LocalDateTime.now()).first()
+        reminders.filter { it.reminderType == ReminderType.DAILY }
+            .forEach { reminderDao.delete(it) }
     }
 }

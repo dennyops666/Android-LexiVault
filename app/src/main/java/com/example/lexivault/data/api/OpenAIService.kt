@@ -1,13 +1,17 @@
 package com.example.lexivault.data.api
 
 import retrofit2.http.Body
+import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
 
 interface OpenAIService {
-    @Headers("Content-Type: application/json")
+    @Headers(
+        "Content-Type: application/json"
+    )
     @POST("v1/chat/completions")
     suspend fun createChatCompletion(
+        @Header("Authorization") apiKey: String,
         @Body request: ChatCompletionRequest
     ): ChatCompletionResponse
 }
@@ -23,7 +27,8 @@ data class ChatCompletionResponse(
 )
 
 data class Choice(
-    val message: Message
+    val message: Message,
+    val finishReason: String? = null
 )
 
 data class Message(

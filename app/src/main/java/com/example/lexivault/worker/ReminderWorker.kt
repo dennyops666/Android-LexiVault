@@ -16,11 +16,11 @@ class ReminderWorker @AssistedInject constructor(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
-        try {
+        return try {
             reminderRepository.checkAndSendNotifications()
-            return Result.success()
+            Result.success()
         } catch (e: Exception) {
-            return Result.retry()
+            Result.retry()
         }
     }
 

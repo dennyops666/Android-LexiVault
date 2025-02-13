@@ -52,3 +52,10 @@ interface WordDao {
     @Query("SELECT COUNT(*) FROM words WHERE lastReviewTime >= :startTime")
     fun getDailyWordCount(startTime: Long): Flow<Int>
 }
+
+data class StudyStats(
+    val totalWords: Int,
+    val reviewedWords: Int,
+    val bookmarkedWords: Int,
+    val totalReviews: Int
+)
