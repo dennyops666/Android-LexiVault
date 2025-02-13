@@ -1,18 +1,26 @@
 package com.example.lexivault
 
 import android.app.Application
-import androidx.hilt.work.HiltWorkerFactory
-import androidx.work.Configuration
+import androidx.room.Room
+import com.example.lexivault.data.database.LexiVaultDatabase
+import com.example.lexivault.data.repository.VocabularyRepository
 import dagger.hilt.android.HiltAndroidApp
-import javax.inject.Inject
 
 @HiltAndroidApp
-class LexiVaultApplication : Application(), Configuration.Provider {
-    @Inject
-    lateinit var workerFactory: HiltWorkerFactory
+class LexiVaultApplication : Application() {
+    private lateinit var database: LexiVaultDatabase
+    lateinit var vocabularyRepository: VocabularyRepository
 
-    override fun getWorkManagerConfiguration(): Configuration =
-        Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
+    override fun onCreate() {
+        super.onCreate()
+        database = Room.databaseBuilder(
+            applicationContext,
+            LexiVaultDatabase::class.java,
+            LexiVaultDatabase.DATABASE_NAME
+        ).build()
+        vocabularyRepository = VocabularyRepository(
+            vocabularyDao = database.vocabularyDao(),
+            wordDao = database.wordDao()
+        )
+    }
 }

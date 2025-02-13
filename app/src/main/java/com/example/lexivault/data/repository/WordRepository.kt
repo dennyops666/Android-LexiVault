@@ -1,8 +1,10 @@
 package com.example.lexivault.data.repository
 
 import com.example.lexivault.data.database.dao.WordDao
+import com.example.lexivault.data.database.dao.StudyStats
 import com.example.lexivault.data.database.entity.WordEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,13 +23,13 @@ class WordRepository @Inject constructor(
     fun getAllWords(): Flow<List<WordEntity>> = wordDao.getAllWords()
 
     // 按类型获取单词（如四级、六级等）
-    fun getWordsByType(type: String): Flow<List<WordEntity>> = wordDao.getWordsByType(type)
+    fun getWordsByType(type: Int): Flow<List<WordEntity>> = wordDao.getWordsByType(type)
 
     // 按分类获取单词（如动词、名词等）
     fun getWordsByCategory(category: String): Flow<List<WordEntity>> = wordDao.getWordsByCategory(category)
 
     // 搜索单词
-    fun searchWords(query: String): Flow<List<WordEntity>> = wordDao.searchWords("%$query%")
+    fun searchWords(query: String): Flow<List<WordEntity>> = wordDao.searchWords(query)
 
     // 获取生词本中的单词
     fun getBookmarkedWords(): Flow<List<WordEntity>> = wordDao.getBookmarkedWords()
@@ -37,15 +39,9 @@ class WordRepository @Inject constructor(
         wordDao.updateBookmarkStatus(wordId, isBookmarked)
     }
 
-    // 更新复习次数和时间
-    suspend fun updateReviewInfo(wordId: Long) {
-        val word = wordDao.getWordById(wordId)
-        word?.let {
-            wordDao.update(it.copy(
-                reviewCount = it.reviewCount + 1,
-                lastReviewTime = System.currentTimeMillis()
-            ))
-        }
+    // 更新学习状态和时间
+    suspend fun updateLearningStatus(wordId: Long, learned: Int) {
+        wordDao.updateLearningStatus(wordId, learned)
     }
 
     // 批量插入单词（用于导入词库）
@@ -53,6 +49,16 @@ class WordRepository @Inject constructor(
 
     // 获取学习统计信息
     fun getStudyStats(): Flow<Map<String, Int>> = wordDao.getStudyStats()
+        .map { stats ->
+            stats.associate { 
+                when (it.status) {
+                    0 -> "未学习"
+                    1 -> "已学习"
+                    2 -> "已掌握"
+                    else -> "未知"
+                } to it.count
+            }
+        }
 
     // 获取今日学习单词数量
     suspend fun getTodayLearnedCount(): Int {

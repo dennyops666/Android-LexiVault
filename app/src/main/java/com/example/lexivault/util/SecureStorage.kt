@@ -35,12 +35,24 @@ class SecureStorage @Inject constructor(
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
+    fun saveString(key: String, value: String) {
+        securePreferences.edit().putString(key, value).apply()
+    }
+
+    fun getString(key: String): String? {
+        return securePreferences.getString(key, null)
+    }
+
+    fun removeKey(key: String) {
+        securePreferences.edit().remove(key).apply()
+    }
+
     fun saveApiKey(apiKey: String) {
-        securePreferences.edit().putString(API_KEY, apiKey).apply()
+        saveString(API_KEY, apiKey)
     }
 
     fun getApiKey(): String? {
-        return securePreferences.getString(API_KEY, null)
+        return getString(API_KEY)
     }
 
     companion object {
